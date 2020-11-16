@@ -57,7 +57,6 @@ public class FancySnowyWeather {
 				WeatherSaveData data = WeatherSaveData.get(event.world);
 				
 				data.DURATION--;
-				data.DURATION = Math.min(400, data.DURATION);
 				if (data.DURATION <= 0) {
 					data.DURATION = event.world.rand.nextInt(10000) + 1000;
 					data.IS_ACTIVE = !data.IS_ACTIVE;

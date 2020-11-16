@@ -13,6 +13,8 @@ public class Config {
 	private static boolean intrusiveMode = false;
 	private static boolean doLightSnow = true;
 	private static boolean doHeavySnow = true;
+	private static int minDist = 4;
+	private static int maxDist = 40000000;
 	
 	public static void readAndWrite() {
 		File f = new File("config/fancy_snowy_weather.properties");
@@ -78,5 +80,13 @@ public class Config {
 	
 	public static float getTextureScale() {
 		return textureScale;
+	}
+	
+	public static int getMinDist() {
+		return minDist;
+	}
+	
+	public static int getMaxDist() {
+		return maxDist;
 	}
 }
