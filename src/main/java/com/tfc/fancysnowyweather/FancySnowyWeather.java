@@ -1,10 +1,20 @@
 package com.tfc.fancysnowyweather;
 
 import com.tfc.fancysnowyweather.config.Config;
+import net.minecraft.block.*;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tags.Tag;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.Heightmap;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
@@ -57,18 +67,99 @@ public class FancySnowyWeather {
 				WeatherSaveData data = WeatherSaveData.get(event.world);
 				
 				data.DURATION--;
+//				data.IS_ACTIVE = true;
+//				data.WEIGHT = 1;
+//				data.DURATION = 1000;
 				if (data.DURATION <= 0) {
-					data.DURATION = event.world.rand.nextInt(10000) + 1000;
+					data.DURATION = event.world.rand.nextInt(Config.getDurationRange()) + Config.getMinDuration();
 					data.IS_ACTIVE = !data.IS_ACTIVE;
-					data.WEIGHT = event.world.rand.nextInt(2) % 2;
-					if (data.WEIGHT >= 1) {
-						data.DURATION /= (data.WEIGHT*4);
-					}
+
+					if (data.IS_ACTIVE) data.WEIGHT = event.world.rand.nextInt(2) % 2;
+
+					if (data.WEIGHT >= 1) data.DURATION /= (data.WEIGHT * 4);
 					
 					event.world.getPlayers().forEach(
-							(player) ->
-									INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
+							(player) -> INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
 					);
+				}
+				
+				if (data.IS_ACTIVE) {
+					if (data.WEIGHT >= 1) {
+						event.world.getPlayers().forEach(
+								(player) -> {
+									Biome biome = event.world.getBiome(player.getPosition());
+									if (biome.getPrecipitation() != Biome.RainType.NONE) {
+										if (event.world.getHeight(Heightmap.Type.MOTION_BLOCKING, player.getPosition()).getY() <= player.getPosition().getY()) {
+											if (Config.shouldDoSlow())
+												player.addPotionEffect(new EffectInstance(Effects.SLOWNESS, 1, 1, false, false));
+											
+											if (Config.shouldDoDamage() && data.DURATION % 1000 == 0) {
+												for (int x = -5; x <= 5; x++) {
+													for (int y = -5; y <= 5; y++) {
+														for (int z = -5; z <= 5; z++) {
+															BlockPos posCheck = player.getPosition().add(x,y,z);
+															BlockState block = player.world.getBlockState(posCheck);
+															if (
+																	block.isFireSource(player.world, posCheck, Direction.UP)||
+																			(
+																					block.getBlock() instanceof CampfireBlock &&
+																							block.get(CampfireBlock.LIT)
+																			) ||
+																			block.getBlock() instanceof MagmaBlock ||
+																			block.getFluidState().getFluid().isEquivalentTo(Fluids.LAVA) ||
+																			block.getFluidState().getFluid().isEquivalentTo(Fluids.FLOWING_LAVA) ||
+																			(player.getFireTimer() > 0 && Config.isFlameWarms())
+															) {
+																return;
+															}
+														}
+													}
+												}
+												player.attackEntityFrom(new DamageSource("weather.freeze.name"),1);
+											}
+										}
+									}
+								}
+						);
+					}
+					if (data.WEIGHT == 1 || event.world.rand.nextInt(100) <= 25) {
+						for (int i = 0; i < 3; i ++) {
+							ServerPlayerEntity playerEntity = ((ServerWorld) event.world).getRandomPlayer();
+							if (playerEntity != null) {
+								BlockPos pos = new BlockPos(
+										playerEntity.getPosXRandom(64),
+										playerEntity.getPosY(),
+										playerEntity.getPosZRandom(64)
+								);
+								pos = event.world.getHeight(Heightmap.Type.MOTION_BLOCKING, pos);
+								Biome biome = event.world.getBiome(pos);
+								if (biome.getPrecipitation() != Biome.RainType.NONE) {
+									if (
+											!event.world.getBlockState(pos.down()).getFluidState().isEmpty() &&
+													event.world.getBlockState(pos.down()).getFluidState().isSource() &&
+													event.world.getBlockState(pos.down()).getFluidState().getFluid().isEquivalentTo(Fluids.WATER)
+									) {
+										if (
+												event.world.getBlockState(pos.down().east()).isSolid() ||
+														event.world.getBlockState(pos.down().east()).getBlock().equals(Blocks.ICE) ||
+														event.world.getBlockState(pos.down().south()).isSolid() ||
+														event.world.getBlockState(pos.down().south()).getBlock().equals(Blocks.ICE) ||
+														event.world.getBlockState(pos.down().north()).isSolid() ||
+														event.world.getBlockState(pos.down().north()).getBlock().equals(Blocks.ICE) ||
+														event.world.getBlockState(pos.down().west()).isSolid() ||
+														event.world.getBlockState(pos.down().west()).getBlock().equals(Blocks.ICE)
+										) {
+											event.world.setBlockState(pos.down(), Blocks.ICE.getDefaultState());
+										}
+									} else if (event.world.getBlockState(pos).isAir()) {
+										if (Blocks.SNOW.isValidPosition(Blocks.SNOW.getDefaultState(), event.world, pos)) {
+											event.world.setBlockState(pos, Blocks.SNOW.getDefaultState());
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}

@@ -5,12 +5,12 @@ import java.io.FileWriter;
 import java.lang.reflect.Field;
 
 public class Config {
-	private static int dist = 16;
-	private static float heavySnowSpeed = 1600;
-	private static float movementScale = 32;
-	private static float textureScale = 32;
-	private static boolean enableFarPlane = true;
-	private static boolean intrusiveMode = false;
+	private static int warmBlockRange = 5;
+	private static int minDuration = 100000;
+	private static int durationRange = 10000;
+	private static boolean doDamage = true;
+	private static boolean doSlow = true;
+	private static boolean flameWarms = true;
 	private static boolean doLightSnow = true;
 	private static boolean doHeavySnow = true;
 	private static int minDist = 4;
@@ -50,22 +50,6 @@ public class Config {
 		}
 	}
 	
-	public static int getDist() {
-		return dist;
-	}
-	
-	public static float getHeavySnowSpeed() {
-		return heavySnowSpeed;
-	}
-	
-	public static boolean enableFarPlane() {
-		return enableFarPlane;
-	}
-	
-	public static boolean isIntrusiveMode() {
-		return intrusiveMode;
-	}
-	
 	public static boolean shouldDoLightSnow() {
 		return doLightSnow;
 	}
@@ -74,19 +58,35 @@ public class Config {
 		return doHeavySnow;
 	}
 	
-	public static float getMovementScale() {
-		return movementScale;
-	}
-	
-	public static float getTextureScale() {
-		return textureScale;
-	}
-	
 	public static int getMinDist() {
 		return minDist;
 	}
 	
 	public static int getMaxDist() {
 		return maxDist;
+	}
+	
+	public static int getWarmBlockRange() {
+		return warmBlockRange;
+	}
+	
+	public static boolean shouldDoDamage() {
+		return doDamage;
+	}
+	
+	public static boolean shouldDoSlow() {
+		return doSlow;
+	}
+	
+	public static boolean isFlameWarms() {
+		return flameWarms;
+	}
+	
+	public static int getMinDuration() {
+		return minDuration;
+	}
+	
+	public static int getDurationRange() {
+		return durationRange;
 	}
 }

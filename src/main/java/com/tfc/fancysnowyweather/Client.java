@@ -44,6 +44,7 @@ public class Client {
 	
 	public static int WEIGHT = 0;
 	public static boolean IS_ACTIVE = false;
+	public static float lerping = 0;
 	
 	private static final String[] weights = new String[]{
 			Config.shouldDoLightSnow() ?
@@ -55,7 +56,19 @@ public class Client {
 	};
 	
 	public static void rwl(RenderWorldLastEvent event) {
-		if (IS_ACTIVE) {
+		if ((IS_ACTIVE || (lerping > 0)) && (Config.shouldDoLightSnow() || Config.shouldDoHeavySnow())) {
+			if (WEIGHT == 0) {
+				lerping += (
+						IS_ACTIVE?0.005f:-0.005f
+				) * 0.5f;
+				lerping = MathHelper.clamp(lerping,0,0.5f);
+			} else {
+				lerping += (
+						IS_ACTIVE?0.005f:-0.005f
+				) * 0.75f;
+				lerping = MathHelper.clamp(lerping,0,0.75f);
+			}
+			
 			RenderSystem.pushMatrix();
 			RenderSystem.pushLightingAttributes();
 			RenderSystem.pushTextureAttributes();
@@ -63,30 +76,61 @@ public class Client {
 			RenderState.field_239238_U_.setupRenderState();
 			
 			RenderSystem.rotatef(
-					((float)Minecraft.getInstance().player.getPitch(event.getPartialTicks())),
+//					((float)Minecraft.getInstance().renderViewEntity.getPitch(event.getPartialTicks())),
+					Minecraft.getInstance().getRenderManager().info.getPitch(),
 					1,
 					0,
 					0
 			);
 			RenderSystem.rotatef(
-					((float)Minecraft.getInstance().player.getYaw(event.getPartialTicks()))+180,
+//					((float)Minecraft.getInstance().renderViewEntity.getYaw(event.getPartialTicks()))+180,
+					Minecraft.getInstance().getRenderManager().info.getYaw()+180,
 					0,
 					1,
 					0
 			);
 			
+//			RenderSystem.translated(
+//					-Minecraft.getInstance().getRenderManager().info.getProjectedView().x,
+//					-Minecraft.getInstance().getRenderManager().info.getProjectedView().y,
+//					-Minecraft.getInstance().getRenderManager().info.getProjectedView().z
+//			);
+//
+//			RenderSystem.translated(
+//					MathHelper.lerp(
+//							event.getPartialTicks(),
+//							Minecraft.getInstance().renderViewEntity.prevPosX,
+//							Minecraft.getInstance().renderViewEntity.getPosX()
+//					),
+//					MathHelper.lerp(
+//							event.getPartialTicks(),
+//							Minecraft.getInstance().renderViewEntity.prevPosY,
+//							Minecraft.getInstance().renderViewEntity.getPosY()
+//					),
+//					MathHelper.lerp(
+//							event.getPartialTicks(),
+//							Minecraft.getInstance().renderViewEntity.prevPosZ,
+//							Minecraft.getInstance().renderViewEntity.getPosZ()
+//					)
+//			);
+			
 			float partialTicks = event.getPartialTicks();
 			double xIn = Minecraft.getInstance().getRenderManager().info.getProjectedView().x;
-			double yIn = Minecraft.getInstance().getRenderManager().info.getProjectedView().y;
+			double yIn =
+					Minecraft.getInstance().getRenderManager().info.getProjectedView().y
+							-(
+									Minecraft.getInstance().renderViewEntity.getEyePosition(partialTicks).getY()-
+											Minecraft.getInstance().renderViewEntity.getPosY()
+					)
+					;
 			double zIn = Minecraft.getInstance().getRenderManager().info.getProjectedView().z;
 			
 			RenderSystem.translated(
 					0,
-					-(Minecraft.getInstance().player.getEyePosition(partialTicks).getY()-yIn),
+					-(Minecraft.getInstance().renderViewEntity.getEyePosition(partialTicks).getY()-yIn),
 					0
 			);
 
-//		lightmapIn.enableLightmap();
 			World world = Minecraft.getInstance().world;
 			int i = MathHelper.floor(xIn);
 			int j = MathHelper.floor(yIn);
@@ -193,8 +237,9 @@ public class Client {
 									float f8 = (float)(random.nextDouble() + (double)(f1 * (float)random.nextGaussian()) * 0.001D);
 									double d3 = (double)((float)k1 + 0.5F) - xIn;
 									double d5 = (double)((float)j1 + 0.5F) - zIn;
-									float f9 = MathHelper.sqrt(d3 * d3 + d5 * d5) / (float)l;
-									float f10 = ((1.0F - f9 * f9) * 0.3F + 0.5F) * /*f*/1;
+//									float f9 = MathHelper.sqrt(d3 * d3 + d5 * d5) / (float)l;
+//									float f10 = ((1.0F - f9 * f9) * 0.3F + 0.5F) * /*f*/1;
+									float f10 = lerping;
 									blockpos$mutable.setPos(k1, l2, j1);
 									int j3 = getCombinedLight(world, blockpos$mutable);
 									int l3 = /*k3*/1 >> 16 & '\uffff';
@@ -227,56 +272,5 @@ public class Client {
 			RenderSystem.popAttributes();
 			RenderSystem.popAttributes();
 		}
-	}
-	
-	public static RenderType getSnow(ResourceLocation locationIn, int weight, int iter) {
-		RenderType.State rendertype$state = RenderType.State.getBuilder().texture(new RenderState.TextureState(locationIn, false, false)).transparency(RenderType.TRANSLUCENT_TRANSPARENCY).diffuseLighting(RenderType.DIFFUSE_LIGHTING_DISABLED).alpha(RenderType.DEFAULT_ALPHA).lightmap(RenderType.LIGHTMAP_DISABLED).overlay(RenderType.OVERLAY_ENABLED)
-				.texturing(new RenderState.TexturingState("snow_"+iter+"_"+weight,() -> {
-					RenderSystem.matrixMode(5890);
-					RenderSystem.pushMatrix();
-					RenderSystem.loadIdentity();
-					RenderSystem.translatef(
-							((float)Minecraft.getInstance().player.getPosX()+(float)Minecraft.getInstance().player.getPosZ())/Config.getMovementScale(),
-							(float)Minecraft.getInstance().player.getPosX()+(float)Minecraft.getInstance().player.getPosZ()/Config.getMovementScale(),
-							0
-					);
-					if (weight == 0) {
-						RenderSystem.translatef(0.5F, 0.5F, 0.0F);
-						RenderSystem.scalef(0.5F, 0.5F, 1.0F);
-						RenderSystem.translatef(17.0F / (float) iter, (2.0F + (float) iter / 1.5F) * ((float)(Util.milliTime() % 800000L) / 800000.0F), 0.0F);
-						RenderSystem.rotatef(((float)(iter * iter) * 4321.0F + (float) iter * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
-						RenderSystem.scalef(4.5F - (float) iter / 4.0F, 4.5F - (float) iter / 4.0F, 1.0F);
-						RenderSystem.translatef(0.5F, 0.5F, 0.0F);
-						RenderSystem.scalef(0.5F, 0.5F, 1.0F);
-						RenderSystem.translatef(17.0F / (float) iter, (2.0F + (float) iter / 1.5F) * ((float)(Util.milliTime() % 800000L) / 800000.0F), 0.0F);
-						RenderSystem.rotatef(((float)(iter * iter) * 4321.0F + (float) iter * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
-						RenderSystem.scalef(4.5F - (float) iter / 4.0F, 4.5F - (float) iter / 4.0F, 1.0F);
-					} else {
-						RenderSystem.translatef(0.5F, 0.5F, 0.0F);
-						RenderSystem.scalef(0.5F, 0.5F, 1.0F);
-						RenderSystem.translatef(17.0F / (float) iter, (2.0F + (float) iter / 1.5F) * ((float)(Util.milliTime() % 800000L) / 800000.0F), 0.0F);
-						RenderSystem.rotatef(((float)(iter * iter) * 4321.0F + (float) iter * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
-						RenderSystem.scalef(4.5F - (float) iter / 4.0F, 4.5F - (float) iter / 4.0F, 1.0F);
-						RenderSystem.translatef(0.5F, 0.5F, 0.0F);
-						RenderSystem.scalef(0.5F, 0.5F, 1.0F);
-						RenderSystem.translatef(17.0F / (float) iter, (2.0F + (float) iter / 1.5F) * ((float)(Util.milliTime() % 800000L) / 800000.0F), 0.0F);
-						RenderSystem.rotatef(((float)(iter * iter) * 4321.0F + (float) iter * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
-						RenderSystem.scalef(4.5F - (float) iter / 4.0F, 4.5F - (float) iter / 4.0F, 1.0F);
-						
-						RenderSystem.translatef((Util.milliTime()% Config.getHeavySnowSpeed())/Config.getHeavySnowSpeed(),(Util.milliTime()%Config.getHeavySnowSpeed())/Config.getHeavySnowSpeed(), 0.0F);
-					}
-					
-					RenderSystem.scalef(Config.getTextureScale(),Config.getTextureScale(),1);
-					
-					RenderSystem.mulTextureByProjModelView();
-					RenderSystem.matrixMode(5888);
-					RenderSystem.setupEndPortalTexGen();
-				}, () -> {
-					RenderSystem.matrixMode(5890);
-					RenderSystem.popMatrix();
-					RenderSystem.matrixMode(5888);
-					RenderSystem.clearTexGen();
-				})).build(true);
-		return makeType("snow_cutout", DefaultVertexFormats.ENTITY, 7, 256, true, false, rendertype$state);
 	}
 }
