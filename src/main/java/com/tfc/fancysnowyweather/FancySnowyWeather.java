@@ -22,6 +22,7 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -55,9 +56,13 @@ public class FancySnowyWeather {
 		MinecraftForge.EVENT_BUS.addListener(FancySnowyWeather::onServerTick);
 		MinecraftForge.EVENT_BUS.addListener(FancySnowyWeather::onPlayerLoggedOn);
 		MinecraftForge.EVENT_BUS.addListener(FancySnowyWeather::onPlayerSwitchDimensions);
-		if (FMLEnvironment.dist.isClient()) {
+		MinecraftForge.EVENT_BUS.addListener(FancySnowyWeather::onServerStarting);
+		if (FMLEnvironment.dist.isClient())
 			MinecraftForge.EVENT_BUS.addListener(Client::rwl);
-		}
+	}
+	
+	public static void onServerStarting(FMLServerStartingEvent event) {
+		FancySnowyWeathersCommand.register(event.getServer().getCommandManager().getDispatcher());
 	}
 	
 	public static void onServerTick(TickEvent.WorldTickEvent event) {
@@ -67,9 +72,6 @@ public class FancySnowyWeather {
 				WeatherSaveData data = WeatherSaveData.get(event.world);
 				
 				data.DURATION--;
-//				data.IS_ACTIVE = true;
-//				data.WEIGHT = 1;
-//				data.DURATION = 1000;
 				if (data.DURATION <= 0) {
 					data.DURATION = event.world.rand.nextInt(Config.getDurationRange()) + Config.getMinDuration();
 					data.IS_ACTIVE = !data.IS_ACTIVE;
@@ -82,6 +84,25 @@ public class FancySnowyWeather {
 							(player) -> INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
 					);
 				}
+				
+				if (data.IS_ACTIVE)
+					if (data.WEIGHT == 0)
+						if (!WeatherSaveData.get("light_enabled", event.world)) {
+							if (!WeatherSaveData.get("heavy_enabled", event.world))
+								data.IS_ACTIVE = false;
+							else data.WEIGHT = 1;
+							event.world.getPlayers().forEach(
+									(player) -> INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
+							);
+						} else if (data.WEIGHT == 1)
+							if (!WeatherSaveData.get("heavy_enabled", event.world)) {
+								if (!WeatherSaveData.get("light_enabled", event.world))
+									data.IS_ACTIVE = false;
+								else data.WEIGHT = 0;
+								event.world.getPlayers().forEach(
+										(player) -> INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
+								);
+							}
 				
 				if (data.IS_ACTIVE) {
 					if (data.WEIGHT >= 1) {

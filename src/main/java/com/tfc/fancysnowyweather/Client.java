@@ -76,61 +76,23 @@ public class Client {
 			RenderState.field_239238_U_.setupRenderState();
 			
 			RenderSystem.rotatef(
-//					((float)Minecraft.getInstance().renderViewEntity.getPitch(event.getPartialTicks())),
 					Minecraft.getInstance().getRenderManager().info.getPitch(),
 					1,
 					0,
 					0
 			);
 			RenderSystem.rotatef(
-//					((float)Minecraft.getInstance().renderViewEntity.getYaw(event.getPartialTicks()))+180,
 					Minecraft.getInstance().getRenderManager().info.getYaw()+180,
 					0,
 					1,
 					0
 			);
 			
-//			RenderSystem.translated(
-//					-Minecraft.getInstance().getRenderManager().info.getProjectedView().x,
-//					-Minecraft.getInstance().getRenderManager().info.getProjectedView().y,
-//					-Minecraft.getInstance().getRenderManager().info.getProjectedView().z
-//			);
-//
-//			RenderSystem.translated(
-//					MathHelper.lerp(
-//							event.getPartialTicks(),
-//							Minecraft.getInstance().renderViewEntity.prevPosX,
-//							Minecraft.getInstance().renderViewEntity.getPosX()
-//					),
-//					MathHelper.lerp(
-//							event.getPartialTicks(),
-//							Minecraft.getInstance().renderViewEntity.prevPosY,
-//							Minecraft.getInstance().renderViewEntity.getPosY()
-//					),
-//					MathHelper.lerp(
-//							event.getPartialTicks(),
-//							Minecraft.getInstance().renderViewEntity.prevPosZ,
-//							Minecraft.getInstance().renderViewEntity.getPosZ()
-//					)
-//			);
-			
 			float partialTicks = event.getPartialTicks();
 			double xIn = Minecraft.getInstance().getRenderManager().info.getProjectedView().x;
-			double yIn =
-					Minecraft.getInstance().getRenderManager().info.getProjectedView().y
-							-(
-									Minecraft.getInstance().renderViewEntity.getEyePosition(partialTicks).getY()-
-											Minecraft.getInstance().renderViewEntity.getPosY()
-					)
-					;
+			double yIn = Minecraft.getInstance().getRenderManager().info.getProjectedView().y;
 			double zIn = Minecraft.getInstance().getRenderManager().info.getProjectedView().z;
 			
-			RenderSystem.translated(
-					0,
-					-(Minecraft.getInstance().renderViewEntity.getEyePosition(partialTicks).getY()-yIn),
-					0
-			);
-
 			World world = Minecraft.getInstance().world;
 			int i = MathHelper.floor(xIn);
 			int j = MathHelper.floor(yIn);

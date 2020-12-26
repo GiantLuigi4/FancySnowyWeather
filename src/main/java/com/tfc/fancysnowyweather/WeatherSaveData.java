@@ -1,6 +1,8 @@
 package com.tfc.fancysnowyweather;
 
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.scoreboard.Score;
+import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
@@ -40,5 +42,15 @@ public class WeatherSaveData extends WorldSavedData {
 		ServerWorld serverWorld = ((ServerWorld) world);
 		DimensionSavedDataManager manager = serverWorld.getSavedData();
 		return manager.getOrCreate(() -> new WeatherSaveData(WeatherSaveData.DATA_NAME), WeatherSaveData.DATA_NAME);
+	}
+	
+	public static boolean get(String gamerule, World world) {
+		ScoreObjective objective = world.getServer().getScoreboard().getObjective("fsw_gamerules");
+		if (world.getServer().getScoreboard().hasObjective("fsw_gamerules")) {
+			Score score = world.getServer().getScoreboard().getOrCreateScore(gamerule,objective);
+			return score.getScorePoints() != 0;
+		} else {
+			return true;
+		}
 	}
 }
