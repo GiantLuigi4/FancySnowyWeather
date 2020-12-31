@@ -18,7 +18,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 public class FancySnowyWeathersCommand {
 	public static LiteralArgumentBuilder construct() {
-		LiteralArgumentBuilder builder = Commands.literal("snowy_weather");
+		LiteralArgumentBuilder builder = Commands.literal("snowy_weather").requires(commandSource -> commandSource.hasPermissionLevel(2));
 		
 		builder.then(Commands.literal("weather")
 				.then(Commands.literal("enable")
@@ -26,11 +26,8 @@ public class FancySnowyWeathersCommand {
 								.executes(context -> {
 									CommandSource source = context.getSource();
 									Scoreboard scoreboard = source.getWorld().getScoreboard();
-									if (!scoreboard.hasObjective("fsw_gamerules"))
-										scoreboard.addObjective("fsw_gamerules", ScoreCriteria.DUMMY, new TranslationTextComponent("fancy_snowy_weathers.gamerule_scoreboard_temp"), ScoreCriteria.RenderType.INTEGER);
-									ScoreObjective objective = scoreboard.getObjective("fsw_gamerules");
-									if (objective != null)
-										scoreboard.getOrCreateScore("heavy_enabled", objective).setScorePoints(1);
+									ScoreObjective objective = WeatherSaveData.setupScores(scoreboard);
+									scoreboard.getOrCreateScore("heavy_enabled", objective).setScorePoints(1);
 									source.sendFeedback(new StringTextComponent("Heavy Weather has been enabled successfully!"), true);
 									return 1;
 								}))
@@ -38,11 +35,8 @@ public class FancySnowyWeathersCommand {
 								.executes(context -> {
 									CommandSource source = context.getSource();
 									Scoreboard scoreboard = source.getWorld().getScoreboard();
-									if (!scoreboard.hasObjective("fsw_gamerules"))
-										scoreboard.addObjective("fsw_gamerules", ScoreCriteria.DUMMY, new TranslationTextComponent("fancy_snowy_weathers.gamerule_scoreboard_temp"), ScoreCriteria.RenderType.INTEGER);
-									ScoreObjective objective = scoreboard.getObjective("fsw_gamerules");
-									if (objective != null)
-										scoreboard.getOrCreateScore("light_enabled", objective).setScorePoints(1);
+									ScoreObjective objective = WeatherSaveData.setupScores(scoreboard);
+									scoreboard.getOrCreateScore("light_enabled", objective).setScorePoints(1);
 									source.sendFeedback(new StringTextComponent("Light Weather has been enabled successfully!"), true);
 									return 1;
 								})))
@@ -51,11 +45,8 @@ public class FancySnowyWeathersCommand {
 								.executes(context -> {
 									CommandSource source = context.getSource();
 									Scoreboard scoreboard = source.getWorld().getScoreboard();
-									if (!scoreboard.hasObjective("fsw_gamerules"))
-										scoreboard.addObjective("fsw_gamerules", ScoreCriteria.DUMMY, new TranslationTextComponent("fancy_snowy_weathers.gamerule_scoreboard_temp"), ScoreCriteria.RenderType.INTEGER);
-									ScoreObjective objective = scoreboard.getObjective("fsw_gamerules");
-									if (objective != null)
-										scoreboard.getOrCreateScore("heavy_enabled", objective).setScorePoints(0);
+									ScoreObjective objective = WeatherSaveData.setupScores(scoreboard);
+									scoreboard.getOrCreateScore("heavy_enabled", objective).setScorePoints(0);
 									source.sendFeedback(new StringTextComponent("Heavy Weather has been disabled successfully!"), true);
 									return 1;
 								}))
@@ -63,11 +54,8 @@ public class FancySnowyWeathersCommand {
 								.executes(context -> {
 									CommandSource source = context.getSource();
 									Scoreboard scoreboard = source.getWorld().getScoreboard();
-									if (!scoreboard.hasObjective("fsw_gamerules"))
-										scoreboard.addObjective("fsw_gamerules", ScoreCriteria.DUMMY, new TranslationTextComponent("fancy_snowy_weathers.gamerule_scoreboard_temp"), ScoreCriteria.RenderType.INTEGER);
-									ScoreObjective objective = scoreboard.getObjective("fsw_gamerules");
-									if (objective != null)
-										scoreboard.getOrCreateScore("light_enabled", objective).setScorePoints(0);
+									ScoreObjective objective = WeatherSaveData.setupScores(scoreboard);
+									scoreboard.getOrCreateScore("light_enabled", objective).setScorePoints(0);
 									source.sendFeedback(new StringTextComponent("Light Weather has been disabled successfully!"), true);
 									return 1;
 								})))
@@ -113,7 +101,7 @@ public class FancySnowyWeathersCommand {
 											data.DURATION = IntegerArgumentType.getInteger(context, "duration");
 											data.WEIGHT = 0;
 											source.getWorld().getPlayers().forEach((player) -> FancySnowyWeather.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT)));
-											source.sendFeedback(new StringTextComponent("Heavy Weather has been activated successfully for " + data.DURATION + " ticks!"), true);
+											source.sendFeedback(new StringTextComponent("Light Weather has been activated successfully for " + data.DURATION + " ticks!"), true);
 											return data.DURATION;
 										}))))
 				.then(Commands.literal("deactivate")

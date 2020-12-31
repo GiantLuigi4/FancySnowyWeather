@@ -28,7 +28,7 @@ displayName = "FancySnowyWeather" #mandatory
 authors = "GiantLuigi4" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description = '''
-Adds a nice cosmetic snow storm
+Adds a nice fancy snow storm (was originally cosemetic, not sure if I have a config setup for that)
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 #[[dependencies.FancySnowyWeather]] #optional

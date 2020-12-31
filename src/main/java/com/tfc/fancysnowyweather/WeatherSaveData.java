@@ -2,7 +2,10 @@ package com.tfc.fancysnowyweather;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.scoreboard.Score;
+import net.minecraft.scoreboard.ScoreCriteria;
 import net.minecraft.scoreboard.ScoreObjective;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
@@ -45,12 +48,38 @@ public class WeatherSaveData extends WorldSavedData {
 	}
 	
 	public static boolean get(String gamerule, World world) {
-		ScoreObjective objective = world.getServer().getScoreboard().getObjective("fsw_gamerules");
-		if (world.getServer().getScoreboard().hasObjective("fsw_gamerules")) {
-			Score score = world.getServer().getScoreboard().getOrCreateScore(gamerule,objective);
+		if (has("fsw_gamerules", world)) {
+			ScoreObjective objective = world.getServer().getScoreboard().getObjective("fsw_gamerules");
+			Score score = world.getServer().getScoreboard().getOrCreateScore(gamerule, objective);
+			System.out.println(score.getScorePoints());
 			return score.getScorePoints() != 0;
 		} else {
+			setupScores(world);
 			return true;
 		}
+	}
+	
+	public static ScoreObjective setupScores(Scoreboard scoreboard) {
+		if (!has("fsw_gamerules", scoreboard)) {
+			scoreboard.addObjective("fsw_gamerules", ScoreCriteria.DUMMY, new TranslationTextComponent("fancy_snowy_weathers.gamerule_scoreboard_temp"), ScoreCriteria.RenderType.INTEGER);
+			ScoreObjective objective = scoreboard.getOrCreateObjective("fsw_gamerules");
+			scoreboard.getOrCreateScore("light_enabled", objective).setScorePoints(1);
+			scoreboard.getOrCreateScore("heavy_enabled", objective).setScorePoints(1);
+		}
+		
+		ScoreObjective objective = scoreboard.getOrCreateObjective("fsw_gamerules");
+		return objective;
+	}
+	
+	public static ScoreObjective setupScores(World world) {
+		return setupScores(world.getScoreboard());
+	}
+	
+	private static boolean has(String scoreboardName, World world) {
+		return has(scoreboardName,world.getScoreboard());
+	}
+	
+	private static boolean has(String scoreboardName, Scoreboard scoreboard) {
+		return scoreboard.getObjective(scoreboardName) != null;
 	}
 }

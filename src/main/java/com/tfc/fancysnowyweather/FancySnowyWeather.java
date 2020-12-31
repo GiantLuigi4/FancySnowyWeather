@@ -49,6 +49,7 @@ public class FancySnowyWeather {
 	
 	public FancySnowyWeather() {
 		INSTANCE.registerMessage(0, WeatherPacket.class, WeatherPacket::writePacketData, WeatherPacket::new, (packet, contex) -> {
+			contex.get().setPacketHandled(true);
 		});
 		
 		Config.readAndWrite();
@@ -86,15 +87,15 @@ public class FancySnowyWeather {
 				}
 				
 				if (data.IS_ACTIVE)
-					if (data.WEIGHT == 0)
-						if (!WeatherSaveData.get("light_enabled", event.world)) {
+					if (data.WEIGHT == 0) {
+						if (!WeatherSaveData.get("light_enabled", event.world))
 							if (!WeatherSaveData.get("heavy_enabled", event.world))
 								data.IS_ACTIVE = false;
 							else data.WEIGHT = 1;
-							event.world.getPlayers().forEach(
-									(player) -> INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
-							);
-						} else if (data.WEIGHT == 1)
+						event.world.getPlayers().forEach(
+								(player) -> INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new WeatherPacket(data.IS_ACTIVE, data.WEIGHT))
+						);
+					} else if (data.WEIGHT == 1)
 							if (!WeatherSaveData.get("heavy_enabled", event.world)) {
 								if (!WeatherSaveData.get("light_enabled", event.world))
 									data.IS_ACTIVE = false;
