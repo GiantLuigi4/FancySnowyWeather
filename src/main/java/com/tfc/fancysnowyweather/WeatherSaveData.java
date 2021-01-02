@@ -51,7 +51,7 @@ public class WeatherSaveData extends WorldSavedData {
 		if (has("fsw_gamerules", world)) {
 			ScoreObjective objective = world.getServer().getScoreboard().getObjective("fsw_gamerules");
 			Score score = world.getServer().getScoreboard().getOrCreateScore(gamerule, objective);
-			System.out.println(score.getScorePoints());
+//			System.out.println(score.getScorePoints());
 			return score.getScorePoints() != 0;
 		} else {
 			setupScores(world);
